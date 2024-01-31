@@ -18,6 +18,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	GH_OWNER = "redwoodjs"
+	GH_REPO  = "rw-cli"
+)
+
 var (
 	// Used for flags.
 	yesFlag           bool
@@ -29,10 +34,9 @@ var (
 
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new redwood app",
-	// Long: "",
-	Args: cobra.MaximumNArgs(1),
-	Run:  runCreate,
+	Short: "Create a new redwood project",
+	Args:  cobra.MaximumNArgs(1),
+	Run:   runCreate,
 }
 
 func init() {
@@ -87,8 +91,11 @@ func runCreate(cmd *cobra.Command, args []string) {
 	fmt.Printf("Use TypeScript: %t\n", useTS)
 
 	// Get the latest release
-	client := github.NewClient(nil).WithAuthToken("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")
-	release, _, err := client.Repositories.GetLatestRelease(context.Background(), "Josh-Walker-GM", "go-rw")
+	client := github.NewClient(nil)
+	if os.Getenv("RW_GITHUB_TOKEN") != "" {
+		client = client.WithAuthToken(os.Getenv("RW_GITHUB_TOKEN"))
+	}
+	release, _, err := client.Repositories.GetLatestRelease(context.Background(), GH_OWNER, GH_REPO)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -135,7 +142,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 
 	// Download template
 	if !cachedTemplate {
-		rc, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), "Josh-Walker-GM", "go-rw", templateAssetId, http.DefaultClient)
+		rc, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), GH_OWNER, GH_REPO, templateAssetId, http.DefaultClient)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

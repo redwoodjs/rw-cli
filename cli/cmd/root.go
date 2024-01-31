@@ -12,8 +12,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "rw",
-	Short: "The redwood CLI tool",
-	// Long: "",
+	Short: "The RedwoodJS CLI",
 }
 
 func init() {

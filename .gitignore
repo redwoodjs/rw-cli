@@ -1,2 +1,5 @@
 # Binary produced from the Makefile 
 rw
+
+# Ignore the goreleaser dist folder
+cli/dist/

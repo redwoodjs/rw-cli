@@ -3,10 +3,13 @@
 
 version: 1
 
+project_name: rw
+
 before:
   hooks:
     - go mod tidy
-    # - go generate ./...
+    - ../scripts/zip_templates.sh ../templates ./templates_archives
+    # - go generate ./... 
 
 builds:
   - env:
@@ -37,3 +40,11 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+report_sizes: true
+
+release:
+  draft: true
+  extra_files:
+    - glob: ./templates_archives/*.zip
+  

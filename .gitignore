@@ -6,3 +6,10 @@ cli/dist/
 
 # Ignore the local .env file
 .env
+
+# Ignore the archives of the templates
+cli/templates_archives/*
+!cli/templates_archives/.keep
+
+# Misc ignores
+.DS_Store

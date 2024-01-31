@@ -10,17 +10,16 @@ if [ ! -d "$bin_dir" ]; then
 	mkdir -p "$bin_dir"
 fi
 
-# TODO(jgmw): Do these still need to be lowercased in this case?
-os=$(uname -s | tr '[:upper:]' '[:lower:]')
-arch=$(uname -m | tr '[:upper:]' '[:lower:]')
+os=$(uname -s)
+arch=$(uname -m)
+download_url="https://github.com/redwoodjs/rw-cli/releases/latest/download/rw_${os}_${arch}.tar.gz"
 
-# TODO(jgmw): Update to the correct url when that is clear
-curl --fail --location --progress-bar --output "$exe.zip" "https://example.com/$os/$arch/latest.zip"
+curl --fail --location --progress-bar --output "$exe.tar.gz" $download_url
 
-unzip -d "$bin_dir" -o "$exe.zip"
+tar -xzf "$exe.tar.gz" -C "$bin_dir"
 chmod +x "$exe"
 
-rm "$exe.zip"
+rm "$exe.tar.gz"
 
 echo "Redwood CLI (rw) was installed successfully to $exe"
 

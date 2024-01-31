@@ -1,3 +1,2 @@
- 
 build:
-	go build -o rw -ldflags="-s -w" .
+	cd cli && go build -o ../rw -ldflags="-s -w" .

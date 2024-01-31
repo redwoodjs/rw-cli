@@ -35,9 +35,8 @@ var (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new redwood app",
-	// Long: "",
-	Args: cobra.MaximumNArgs(1),
-	Run:  runCreate,
+	Args:  cobra.MaximumNArgs(1),
+	Run:   runCreate,
 }
 
 func init() {

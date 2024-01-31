@@ -2,6 +2,16 @@
 
 set -e
 
+check_dependency() {
+    if ! command -v $1 > /dev/null 2>&1; then
+        echo "Error: $1 is not installed."
+        exit 1
+    fi
+}
+
+check_dependency "curl"
+check_dependency "tar"
+
 redwood_install="${HOME}/.rw"
 bin_dir="$redwood_install/bin"
 exe="$bin_dir/rw"

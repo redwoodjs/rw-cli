@@ -92,8 +92,8 @@ func runCreate(cmd *cobra.Command, args []string) {
 
 	// Get the latest release
 	client := github.NewClient(nil)
-	if os.Getenv("GH_TOKEN") != "" {
-		client = client.WithAuthToken(os.Getenv("GH_TOKEN"))
+	if os.Getenv("RW_GITHUB_TOKEN") != "" {
+		client = client.WithAuthToken(os.Getenv("RW_GITHUB_TOKEN"))
 	}
 	release, _, err := client.Repositories.GetLatestRelease(context.Background(), GH_OWNER, GH_REPO)
 	if err != nil {

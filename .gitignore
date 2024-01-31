@@ -3,3 +3,6 @@ rw
 
 # Ignore the goreleaser dist folder
 cli/dist/
+
+# Ignore the local .env file
+.env

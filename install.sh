@@ -2,7 +2,7 @@
 
 set -e
 
-redwood_install="${HOME}/.redwood"
+redwood_install="${HOME}/.rw"
 bin_dir="$redwood_install/bin"
 exe="$bin_dir/rw"
 

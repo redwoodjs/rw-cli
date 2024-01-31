@@ -3,6 +3,7 @@ package cmd
 import (
 	"archive/zip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,6 +31,7 @@ var (
 	typescriptFlag    bool
 	gitInitFlag       bool
 	commitMessageFlag string
+	bighornFlag       bool
 )
 
 var createCmd = &cobra.Command{
@@ -48,6 +50,7 @@ func init() {
 	createCmd.Flags().BoolVar(&typescriptFlag, "typescript", true, "Generate a TypeScript project")
 	createCmd.Flags().BoolVar(&gitInitFlag, "git-init", true, "Initialize a git repository")
 	createCmd.Flags().StringVarP(&commitMessageFlag, "commit-message", "m", "initial commit", "Commit message for the initial commit")
+	createCmd.Flags().BoolVar(&bighornFlag, "bighorn", false, "Commit message for the initial commit")
 
 	// TODO(jgmw): Add flag for yarn install based on yarn version?
 }
@@ -103,9 +106,14 @@ func runCreate(cmd *cobra.Command, args []string) {
 	rTag := release.GetTagName()
 	fmt.Printf("%v\n", rTag)
 
-	templateAssetName := "CRWA_JS.zip"
+	epochName := "arapaho"
+	if bighornFlag {
+		epochName = "bighorn"
+	}
+
+	templateAssetName := epochName + "_js.zip"
 	if useTS {
-		templateAssetName = "CRWA_TS.zip"
+		templateAssetName = epochName + "_ts.zip"
 	}
 
 	templateAssetId := int64(0)
@@ -115,10 +123,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	zipName := rTag + "-js.zip"
-	if useTS {
-		zipName = rTag + "-ts.zip"
-	}
+	zipName := rTag + "_" + templateAssetName
 
 	// Check if we already have the template cached
 	homeDir, err := os.UserHomeDir()
@@ -126,7 +131,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	cachePath := filepath.Join(homeDir, ".redwood", "templates", zipName)
+	cachePath := filepath.Join(homeDir, ".rw", "templates", zipName)
 	cachedTemplate := false
 	if _, err := os.Stat(cachePath); err == nil {
 		cachedTemplate = true
@@ -142,6 +147,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 
 	// Download template
 	if !cachedTemplate {
+		// TODO(jgmw): Consider downloading via a HTTP endpoint but could be less robust?
 		rc, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), GH_OWNER, GH_REPO, templateAssetId, http.DefaultClient)
 		if err != nil {
 			fmt.Println(err)
@@ -182,9 +188,8 @@ func runCreate(cmd *cobra.Command, args []string) {
 	}
 	defer archive.Close()
 
-	tlFolder := archive.File[0].Name
 	for _, f := range archive.File {
-		filePath := filepath.Join(vTDir, strings.Replace(f.Name, tlFolder, "", 1))
+		filePath := filepath.Join(vTDir, f.Name)
 
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(filePath, os.ModePerm)
@@ -213,9 +218,15 @@ func runCreate(cmd *cobra.Command, args []string) {
 		fileInArchive.Close()
 	}
 
-	// Must rename the gitignore template file
-	err = os.Rename(filepath.Join(vTDir, "gitignore.template"), filepath.Join(vTDir, ".gitignore"))
-	if err != nil {
+	// Must rename the gitignore template file if it exists
+	gitignoreTemplatePath := filepath.Join(vTDir, "gitignore.template")
+	if _, err := os.Stat(gitignoreTemplatePath); err == nil {
+		err = os.Rename(filepath.Join(vTDir, "gitignore.template"), filepath.Join(vTDir, ".gitignore"))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
 		fmt.Println(err)
 		os.Exit(1)
 	}

@@ -34,7 +34,7 @@ var (
 
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new redwood app",
+	Short: "Create a new redwood project",
 	Args:  cobra.MaximumNArgs(1),
 	Run:   runCreate,
 }

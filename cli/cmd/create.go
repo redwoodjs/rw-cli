@@ -286,9 +286,10 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		err = setupGit(cmd, vTDir)
 		if err != nil {
 			slog.Error("failed to setup git", slog.String("error", err.Error()))
-			return err
+			fmt.Println(" ⚠️ Failed to complete git setup")
+		} else {
+			slog.Debug("git setup complete")
 		}
-		slog.Debug("git setup complete")
 	}
 
 	if yarnInstallFlag {

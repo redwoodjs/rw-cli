@@ -24,3 +24,5 @@ jobs:
           go-version: '1.21'
 
       - run: make smoke-test
+
+      - run: ./rw create $TMPDIR/rw-test

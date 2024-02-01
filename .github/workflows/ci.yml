@@ -25,4 +25,4 @@ jobs:
 
       - run: make smoke-test
 
-      - run: ./rw create $TMPDIR/rw-test
+      - run: ./rw create ${{ runner.temp }}/rw-test

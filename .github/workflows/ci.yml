@@ -26,6 +26,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache-dependency-path: ./cli/go.sum
 
       - run: make smoke-test
 

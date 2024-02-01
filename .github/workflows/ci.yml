@@ -3,6 +3,7 @@ name: 🔄 CI
 on:
   pull_request:
   push:
+    branches: [main]
   workflow_dispatch:
 
 # Cancel in-progress runs of this workflow.

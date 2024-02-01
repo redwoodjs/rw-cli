@@ -34,6 +34,7 @@ var (
 	gitInitFlag       bool
 	commitMessageFlag string
 	bighornFlag       bool
+	yarnInstallFlag   bool
 )
 
 var createCmd = &cobra.Command{
@@ -52,6 +53,7 @@ func init() {
 	createCmd.Flags().BoolVar(&typescriptFlag, "typescript", true, "Generate a TypeScript project")
 	createCmd.Flags().BoolVar(&gitInitFlag, "git-init", true, "Initialize a git repository")
 	createCmd.Flags().StringVarP(&commitMessageFlag, "commit-message", "m", "initial commit", "Commit message for the initial commit")
+	createCmd.Flags().BoolVar(&yarnInstallFlag, "yarn-install", false, "Install node modules")
 	createCmd.Flags().BoolVar(&bighornFlag, "bighorn", false, "Commit message for the initial commit")
 
 	// TODO(jgmw): Add flag for yarn install based on yarn version?
@@ -289,10 +291,22 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		slog.Debug("git setup complete")
 	}
 
-	// TODO(jgmw): Yarn install - maybe
-	// TODO(jgmw): Generate types
+	if yarnInstallFlag {
+		fmt.Println(" 🚚 Installing node modules...")
+		fmt.Println("   ⏳ This may take a few minutes...")
 
-	fmt.Println(" 🎉 Done!\n")
+		cmd := exec.Command("yarn", "install")
+		cmd.Dir = vTDir
+		err = cmd.Run()
+		if err != nil {
+			slog.Error("failed to install node modules", slog.String("error", err.Error()))
+			return err
+		}
+	}
+
+	// TODO(jgmw): Generate types - we should do this at release time anyway?
+
+	fmt.Printf(" 🎉 Done!\n\n")
 	printEpilogue(tDir)
 
 	return nil

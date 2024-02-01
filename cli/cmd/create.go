@@ -422,7 +422,7 @@ func printEpilogue(appDir string) {
 		Width(w)
 
 	// TODO(jgmw): Style each line differently as previously done
-	output := strings.Join([]string{
+	lines := []string{
 		"Thanks for trying out Redwood!",
 		"",
 		" ⚡️ Get up and running fast with this Quick Start guide: https://redwoodjs.com/quick-start",
@@ -430,9 +430,13 @@ func printEpilogue(appDir string) {
 		"Fire it up! 🚀",
 		"",
 		"  cd " + appDir,
-		"  yarn install",
-		"  yarn rw dev",
-	}, "\n")
+	}
+	if !yarnInstallFlag {
+		lines = append(lines, "  yarn install")
+	}
+	lines = append(lines, "  yarn rw dev")
+
+	output := strings.Join(lines, "\n")
 
 	fmt.Println(style.Render(output))
 }

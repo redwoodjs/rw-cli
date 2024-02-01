@@ -37,12 +37,10 @@ require (
 
 require (
 	github.com/charmbracelet/lipgloss v0.9.1
-	github.com/fatih/color v1.16.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/google/go-github/v58 v58.0.0
 	github.com/hairyhenderson/go-which v0.2.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/spf13/afero v1.3.3 // indirect
 	github.com/spf13/cobra v1.8.0

@@ -286,7 +286,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		err = setupGit(cmd, vTDir)
 		if err != nil {
 			slog.Error("failed to setup git", slog.String("error", err.Error()))
-			fmt.Println(" ⚠️ Failed to complete git setup")
+			fmt.Println("   ✋ Failed to complete git setup")
 		} else {
 			slog.Debug("git setup complete")
 		}

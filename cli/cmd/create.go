@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v58/github"
 	"github.com/hairyhenderson/go-which"
@@ -40,7 +40,7 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new redwood project",
 	Args:  cobra.MaximumNArgs(1),
-	Run:   runCreate,
+	RunE:  runCreate,
 }
 
 func init() {
@@ -57,7 +57,7 @@ func init() {
 	// TODO(jgmw): Add flag for yarn install based on yarn version?
 }
 
-func runCreate(cmd *cobra.Command, args []string) {
+func runCreate(cmd *cobra.Command, args []string) error {
 	slog.Debug("create command", slog.String("positional", args[0]))
 	printInto()
 
@@ -65,19 +65,19 @@ func runCreate(cmd *cobra.Command, args []string) {
 	err := checkNode()
 	if err != nil {
 		slog.Error("node check failed", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	slog.Debug("node check passed")
+	fmt.Println(" ✅ NodeJS requirements met")
 
 	// Check yarn
 	err = checkYarn()
 	if err != nil {
 		slog.Error("yarn check failed", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	slog.Debug("yarn check passed")
+	fmt.Println(" ✅ Yarn requirements met")
 
 	// Target directory
 	tDir := "./redwood-app"
@@ -89,11 +89,10 @@ func runCreate(cmd *cobra.Command, args []string) {
 	vTDir, err := validateTargetDirectory(tDir, overwriteFlag)
 	if err != nil {
 		slog.Error("target directory validation failed", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	slog.Debug("target directory validation passed", slog.String("target", vTDir))
-	fmt.Printf("Target directory: %s\n", vTDir)
+	fmt.Println(" 🗂️  Creating project at: " + tDir)
 
 	// TS or JS
 	useTS := typescriptFlag
@@ -102,7 +101,11 @@ func runCreate(cmd *cobra.Command, args []string) {
 		slog.Debug("typescript flag unset, prompting")
 	}
 	slog.Debug("typescript flag", slog.Bool("typescript", useTS))
-	fmt.Printf("Use TypeScript: %t\n", useTS)
+	if useTS {
+		fmt.Println(" 🟦 Using TypeScript")
+	} else {
+		fmt.Println(" 🟨 Using JavaScript")
+	}
 
 	// Get the latest release
 	client := github.NewClient(nil)
@@ -114,12 +117,10 @@ func runCreate(cmd *cobra.Command, args []string) {
 	release, _, err := client.Repositories.GetLatestRelease(context.Background(), GH_OWNER, GH_REPO)
 	if err != nil {
 		slog.Error("failed to get latest release", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	rTag := release.GetTagName()
 	slog.Debug("latest release", slog.String("tag", rTag))
-	fmt.Printf("Latest version: %s\n", rTag)
 
 	epochName := "arapaho"
 	if bighornFlag {
@@ -147,8 +148,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		slog.Error("failed to get user home directory", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	cachePath := filepath.Join(homeDir, ".rw", "templates", zipName)
 	cachedTemplate := false
@@ -159,55 +159,56 @@ func runCreate(cmd *cobra.Command, args []string) {
 	} else {
 		// Some other error
 		slog.Error("failed to check if template is cached", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	slog.Debug("template cache path", slog.String("path", cachePath))
 	slog.Debug("template cache status", slog.Bool("status", cachedTemplate))
-	fmt.Printf("Cached template: %t\n", cachedTemplate)
+
+	if epochName == "bighorn" {
+		fmt.Println(" 🐏 Using Bighorn at " + rTag)
+	} else {
+		fmt.Println(" 🌲 Using Arapaho at " + rTag)
+	}
 
 	// Download template
 	if !cachedTemplate {
+		fmt.Println(" 📞 Downloading template...")
 		sTime := time.Now()
 
 		// TODO(jgmw): Consider downloading via a HTTP endpoint but could be less robust?
 		rc, _, err := client.Repositories.DownloadReleaseAsset(context.Background(), GH_OWNER, GH_REPO, templateAssetId, http.DefaultClient)
 		if err != nil {
 			slog.Error("failed to download template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		defer rc.Close()
 
 		err = os.MkdirAll(filepath.Dir(cachePath), 0755)
 		if err != nil {
 			slog.Error("failed to create template cache directory", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		tf, err := os.Create(cachePath)
 		if err != nil {
 			slog.Error("failed to create template cache file", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		defer tf.Close()
 
 		_, err = io.Copy(tf, rc)
 		if err != nil {
 			slog.Error("failed to write template cache file", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		slog.Debug("template downloaded and saved", slog.Duration("duration", time.Since(sTime)))
 	}
 
+	fmt.Println(" 📦 Unpacking template...")
 	// Create app from template
 	err = os.MkdirAll(vTDir, 0755)
 	if err != nil {
 		slog.Error("failed to create target directory", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	slog.Debug("target directory created", slog.String("path", vTDir))
 
@@ -215,8 +216,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 	archive, err := zip.OpenReader(cachePath)
 	if err != nil {
 		slog.Error("failed to open template zip", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	defer archive.Close()
 	slog.Debug("template zip opened", slog.String("path", cachePath))
@@ -231,28 +231,24 @@ func runCreate(cmd *cobra.Command, args []string) {
 
 		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
 			slog.Error("failed to create directory for file in template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			slog.Error("failed to create file in template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		fileInArchive, err := f.Open()
 		if err != nil {
 			slog.Error("failed to open file in template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
 			slog.Error("failed to write file in template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
 		dstFile.Close()
@@ -267,14 +263,12 @@ func runCreate(cmd *cobra.Command, args []string) {
 		err = os.Rename(filepath.Join(vTDir, "gitignore.template"), filepath.Join(vTDir, ".gitignore"))
 		if err != nil {
 			slog.Error("failed to rename gitignore template", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		slog.Debug("gitignore template renamed")
 	} else if !errors.Is(err, os.ErrNotExist) {
 		slog.Error("failed to check if gitignore template exists", slog.String("error", err.Error()))
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	// Git
@@ -284,14 +278,13 @@ func runCreate(cmd *cobra.Command, args []string) {
 		// TODO(jgmw): Prompt for git
 	}
 	slog.Debug("git flag", slog.Bool("git", useGit))
-	fmt.Printf("Use Git: %t\n", useGit)
 
 	if useGit {
+		fmt.Println(" 🗃️  Initializing git repository...")
 		err = setupGit(cmd, vTDir)
 		if err != nil {
 			slog.Error("failed to setup git", slog.String("error", err.Error()))
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 		slog.Debug("git setup complete")
 	}
@@ -299,7 +292,10 @@ func runCreate(cmd *cobra.Command, args []string) {
 	// TODO(jgmw): Yarn install - maybe
 	// TODO(jgmw): Generate types
 
-	printEpilogue()
+	fmt.Println(" 🎉 Done!\n")
+	printEpilogue(tDir)
+
+	return nil
 }
 
 func checkNode() error {
@@ -307,9 +303,9 @@ func checkNode() error {
 	if len(nodes) == 0 {
 		return fmt.Errorf("node not found")
 	}
-	fmt.Println("Node found:")
+	slog.Debug("node found", slog.Int("count", len(nodes)))
 	for _, node := range nodes {
-		fmt.Printf("  %s\n", node)
+		slog.Debug("node found", slog.String("path", node))
 	}
 
 	// TODO(jgmw): Check node installation source
@@ -319,7 +315,7 @@ func checkNode() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Node version: %s\n", nodeVer)
+	slog.Debug("node version", slog.String("version", string(nodeVer)))
 
 	// TODO(jgmw): Check node version against minimum version
 
@@ -331,9 +327,9 @@ func checkYarn() error {
 	if len(yarns) == 0 {
 		return fmt.Errorf("yarn not found")
 	}
-	fmt.Println("Yarn found:")
+	slog.Debug("yarn found", slog.Int("count", len(yarns)))
 	for _, yarn := range yarns {
-		fmt.Printf("  %s\n", yarn)
+		slog.Debug("yarn found", slog.String("path", yarn))
 	}
 
 	// TODO(jgmw): Check yarn installation source
@@ -343,7 +339,7 @@ func checkYarn() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Yarn version: %s\n", yarnVer)
+	slog.Debug("yarn version", slog.String("version", string(yarnVer)))
 
 	// TODO(jgmw): Check yarn version against minimum version
 
@@ -363,7 +359,6 @@ func setupGit(cmd *cobra.Command, vTDir string) error {
 	if err != nil {
 		if err == git.ErrRepositoryAlreadyExists {
 			slog.Warn("git repository already exists, skipping git init")
-			fmt.Println("Git repository already exists, skipping git init")
 			return nil
 		}
 		return err
@@ -385,34 +380,47 @@ func setupGit(cmd *cobra.Command, vTDir string) error {
 		return err
 	}
 	slog.Debug("initial commit complete", slog.String("message", commitMsg))
-	fmt.Printf("Commit message: %s\n", commitMsg)
 
 	return nil
 }
 
 func printInto() {
-	// TODO(jgmw): Use terminal width to determine how many dashes to print
-	yellow := color.New(color.FgYellow)
-	yellow.Println(strings.Repeat("-", 66))
-	fmt.Printf("%16s🌲⚡️ %s ⚡️🌲\n", "", ("Welcome to RedwoodJS!"))
-	yellow.Println(strings.Repeat("-", 66))
+	w, _ := getTerminalSize()
+
+	style := lipgloss.NewStyle().
+		Bold(true).
+		Border(lipgloss.DoubleBorder(), true, false, true).
+		BorderForeground(lipgloss.Color("#FF845E")).
+		// Foreground(lipgloss.Color("#E8E8E8")).
+		Align(lipgloss.Center).
+		Width(w)
+
+	fmt.Println(style.Render("🌲 ⚡️ Welcome to RedwoodJS! ⚡️ 🌲"))
 }
 
-func printEpilogue() {
-	// TODO(jgmw): Use terminal width to determine how many dashes to print
-	green := color.New(color.FgGreen)
+func printEpilogue(appDir string) {
+	w, _ := getTerminalSize()
+	style := lipgloss.NewStyle().
+		Border(lipgloss.DoubleBorder(), false, false, true).
+		BorderForeground(lipgloss.Color("#FF845E")).
+		// Foreground(lipgloss.Color("#E8E8E8")).
+		Align(lipgloss.Left).
+		Width(w)
 
-	fmt.Println()
-	green.Println("Thanks for trying out Redwood!")
-	fmt.Println()
-	fmt.Println(" ⚡️ Get up and running fast with this Quick Start guide: https://redwoodjs.com/quick-start")
-	fmt.Println()
-	fmt.Println("Fire it up! 🚀")
-	fmt.Println()
-	green.Println("  cd <your-app-name>")
-	green.Println("  yarn install")
-	green.Println("  yarn rw dev")
-	fmt.Println()
+	// TODO(jgmw): Style each line differently as previously done
+	output := strings.Join([]string{
+		"Thanks for trying out Redwood!",
+		"",
+		" ⚡️ Get up and running fast with this Quick Start guide: https://redwoodjs.com/quick-start",
+		"",
+		"Fire it up! 🚀",
+		"",
+		"  cd " + appDir,
+		"  yarn install",
+		"  yarn rw dev",
+	}, "\n")
+
+	fmt.Println(style.Render(output))
 }
 
 func validateTargetDirectory(tDir string, overwrite bool) (string, error) {

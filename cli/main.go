@@ -41,8 +41,11 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	// We defer here rather than inside the setupDebugLogger function so that
+	// the logger is available to the rest of the program
 	defer teardownDebugLogger()
 
+	// The root command handles errors itself, so we don't need to do anything
 	cmd.Execute()
 }
 

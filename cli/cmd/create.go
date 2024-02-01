@@ -54,7 +54,7 @@ func init() {
 	createCmd.Flags().BoolVar(&gitInitFlag, "git-init", true, "Initialize a git repository")
 	createCmd.Flags().StringVarP(&commitMessageFlag, "commit-message", "m", "initial commit", "Commit message for the initial commit")
 	createCmd.Flags().BoolVar(&yarnInstallFlag, "yarn-install", false, "Install node modules")
-	createCmd.Flags().BoolVar(&bighornFlag, "bighorn", false, "Commit message for the initial commit")
+	createCmd.Flags().BoolVar(&bighornFlag, "bighorn", false, "Use the Bighorn epoch template")
 
 	// TODO(jgmw): Add flag for yarn install based on yarn version?
 }
@@ -347,15 +347,6 @@ func checkYarn() error {
 	}
 
 	// TODO(jgmw): Check yarn installation source
-
-	// TODO(jgmw): Execute yarn version check
-	yarnVer, err := exec.Command("yarn", "-v").Output()
-	if err != nil {
-		return err
-	}
-	slog.Debug("yarn version", slog.String("version", string(yarnVer)))
-
-	// TODO(jgmw): Check yarn version against minimum version
 
 	return nil
 }

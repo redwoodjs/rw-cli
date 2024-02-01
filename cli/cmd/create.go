@@ -432,6 +432,7 @@ func printEpilogue(appDir string) {
 	fmt.Println(style.Render(output))
 }
 
+// TODO(jgmw): Add unit tests for this
 func validateTargetDirectory(tDir string, overwrite bool) (string, error) {
 	absTDir, err := filepath.Abs(tDir)
 	if err != nil {

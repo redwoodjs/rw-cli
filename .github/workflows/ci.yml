@@ -34,7 +34,7 @@ jobs:
         run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
 
       - name: Works with git config
-      - run: |
+        run: |
           git config --global user.email "test@example.com"
           git config --global user.name "test"
           ./rw create ${{ runner.temp }}/rw-test-git-config

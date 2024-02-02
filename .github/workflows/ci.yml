@@ -16,8 +16,7 @@ env:
   RW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  ci:
-    name: 🔄 CI
+  go:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +28,45 @@ jobs:
           cache-dependency-path: ./cli/go.sum
 
       - run: make smoke-test
+
+  git:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: ./cli/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+
+      - name: Doesn't require git config
+        run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
+
+      - name: Works with git config
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "test"
+          ./rw create ${{ runner.temp }}/rw-test-git-config
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: git-logs
+          path: ~/.rw/debug.json
+
+  node:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: ./cli/go.sum
 
       - name: Errors if the node version is too low
         run: |
@@ -49,23 +87,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 21
+      - run: corepack enable
 
       - name: Allows node versions >= 20
         run: |
           ./rw create ${{ runner.temp }}/rw-test-node-version-met
 
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: node-logs
+          path: ~/.rw/debug.json
+
+  yarn:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: ./cli/go.sum
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Doesn't require git config
-        run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
-
-      - name: Works with git config
-        run: |
-          git config --global user.email "test@example.com"
-          git config --global user.name "test"
-          ./rw create ${{ runner.temp }}/rw-test-git-config
 
       - name: Errors if yarn is not used via corepack
         run: |
@@ -81,5 +127,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: logs
+          name: yarn-logs
           path: ~/.rw/debug.json

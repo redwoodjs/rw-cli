@@ -353,7 +353,7 @@ func checkYarn() error {
 		slog.Debug("yarn found", slog.String("path", yarn))
 
 		// Run `exec env | grep COREPACK_ROOT`
-		out, err := exec.Command(yarn + " exec env").Output()
+		out, err := exec.Command(yarn, "exec", "env").Output()
 		if err != nil {
 			slog.Error("failed to run yarn exec env", slog.String("error", err.Error()))
 			return err

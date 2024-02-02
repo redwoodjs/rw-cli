@@ -67,15 +67,16 @@ jobs:
           git config --global user.name "test"
           ./rw create ${{ runner.temp }}/rw-test-git-config
 
-      - name: Golden path
+      - name: Errors if yarn is not used via corepack
         run: |
           TARGET_DIR="${{ runner.temp }}/rw-test"
           ./rw create $TARGET_DIR
-          cd $TARGET_DIR
-          yarn
-          yarn rw --version
-          # yarn rw dev
-          # Check that the dev server is available at http://localhost:8910
+
+      - name: Errors if not all yarns are via corepack
+        run: |
+          corepack enable
+          TARGET_DIR="${{ runner.temp }}/rw-test"
+          ./rw create $TARGET_DIR
 
       - uses: actions/upload-artifact@v4
         if: always()

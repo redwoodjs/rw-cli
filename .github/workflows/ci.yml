@@ -22,6 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - run: yarn -v
+      - run: /usr/local/bin/yarn exec env
 
       - uses: actions/setup-go@v5
         with:

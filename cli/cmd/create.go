@@ -348,11 +348,24 @@ func checkYarn() error {
 		return fmt.Errorf("yarn not found")
 	}
 	slog.Debug("yarn found", slog.Int("count", len(yarns)))
+	allCorepack := true
 	for _, yarn := range yarns {
 		slog.Debug("yarn found", slog.String("path", yarn))
+
+		// Run `exec env | grep COREPACK_ROOT`
+		out, err := exec.Command(yarn + " exec env").Output()
+		if err != nil {
+			slog.Error("failed to run yarn exec env", slog.String("error", err.Error()))
+			return err
+		}
+		sOut := string(out)
+		allCorepack = allCorepack && strings.Contains(sOut, "COREPACK_ROOT=")
 	}
 
-	// TODO(jgmw): Check yarn installation source
+	if !allCorepack {
+		slog.Error("yarn is not used via corepack", slog.Bool("all", allCorepack))
+		return fmt.Errorf("yarn is not used via corepack")
+	}
 
 	return nil
 }

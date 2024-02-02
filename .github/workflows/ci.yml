@@ -30,6 +30,33 @@ jobs:
 
       - run: make smoke-test
 
+      - name: Errors if the node version is too low
+        run: |
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-node-version-unmet
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 21
+
+      - name: Allows node versions >= 20
+        run: |
+          ./rw create ${{ runner.temp }}/rw-test-node-version-met
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Doesn't require git config
         run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
 

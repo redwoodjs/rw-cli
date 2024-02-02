@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/mod/semver"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v58/github"
@@ -323,8 +325,6 @@ func checkNode() error {
 		slog.Debug("node found", slog.String("path", node))
 	}
 
-	// TODO(jgmw): Check node installation source
-
 	// Check node version
 	nodeVer, err := exec.Command("node", "-v").Output()
 	if err != nil {
@@ -332,7 +332,12 @@ func checkNode() error {
 	}
 	slog.Debug("node version", slog.String("version", string(nodeVer)))
 
-	// TODO(jgmw): Check node version against minimum version
+	// We require node 20
+	nodeReqVer := "v20.0.0"
+	if semver.Compare(nodeReqVer, strings.TrimSpace(string(nodeVer))) > 0 {
+		slog.Error("node version is too low", slog.String("version", string(nodeVer)), slog.String("required", nodeReqVer))
+		return fmt.Errorf("node version is too low")
+	}
 
 	return nil
 }

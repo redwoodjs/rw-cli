@@ -359,7 +359,14 @@ func checkYarn() error {
 			return err
 		}
 		sOut := string(out)
-		allCorepack = allCorepack && strings.Contains(sOut, "COREPACK_ROOT=")
+		found := false
+		for _, line := range strings.Split(sOut, "\n") {
+			if strings.Contains(line, "COREPACK_ROOT=") {
+				slog.Debug("yarn is used via corepack", slog.String("line", line))
+				found = true
+			}
+		}
+		allCorepack = allCorepack && found
 	}
 
 	if !allCorepack {

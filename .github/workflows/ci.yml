@@ -47,7 +47,9 @@ jobs:
           node-version: 20
 
       - run: corepack enable
-      - run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
+
+      - name: Move runners default yarn bin
+        run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
 
       - name: Doesn't require git config
         run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
@@ -97,6 +99,9 @@ jobs:
         with:
           node-version: 21
       - run: corepack enable
+
+      - name: Move runners default yarn bin
+        run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
 
       - name: Allows node versions >= 20
         run: |

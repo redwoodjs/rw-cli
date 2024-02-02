@@ -47,6 +47,7 @@ jobs:
           node-version: 20
 
       - run: corepack enable
+      - run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
 
       - name: Doesn't require git config
         run: ./rw create ${{ runner.temp }}/rw-test-no-git-config

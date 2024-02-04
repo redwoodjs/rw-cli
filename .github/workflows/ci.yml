@@ -72,12 +72,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: make build
-
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./cli/go.mod
           cache-dependency-path: ./cli/go.sum
+
+      - run: make build
 
       - name: Errors if the node version is too low
         run: |
@@ -119,12 +119,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: make build
-
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./cli/go.mod
           cache-dependency-path: ./cli/go.sum
+
+      - run: make build
 
       - uses: actions/setup-node@v4
         with:

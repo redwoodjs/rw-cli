@@ -135,14 +135,36 @@ jobs:
 
       - name: Errors if yarn is not used via corepack
         run: |
-          TARGET_DIR="${{ runner.temp }}/rw-test"
-          ./rw create $TARGET_DIR
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-yarn-not-corepack
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+          fi
 
       - name: Errors if not all yarns are via corepack
         run: |
           corepack enable
-          TARGET_DIR="${{ runner.temp }}/rw-test"
-          ./rw create $TARGET_DIR
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-yarn-not-all-corepack
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()

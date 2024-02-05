@@ -31,6 +31,7 @@ jobs:
 
   git:
     runs-on: ubuntu-latest
+    needs: go
 
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +69,7 @@ jobs:
 
   node:
     runs-on: ubuntu-latest
+    needs: go
 
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +117,7 @@ jobs:
 
   yarn:
     runs-on: ubuntu-latest
+    needs: go
 
     steps:
       - uses: actions/checkout@v4

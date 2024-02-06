@@ -1,0 +1,30 @@
+env HOME=$WORK/home
+
+# --help
+exec rw --help
+cmp stdout help.stdout
+cmp stderr help.stderr
+
+# -h
+exec rw -h
+cmp stdout help.stdout
+cmp stderr help.stderr
+
+-- help.stdout --
+The RedwoodJS CLI
+
+Usage:
+  rw [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  create      Create a new redwood project
+  help        Help about any command
+
+Flags:
+  -h, --help        help for rw
+      --telemetry   Send telemetry events, see: https://telemetry.redwoodjs.com (default true)
+  -v, --version     version for rw
+
+Use "rw [command] --help" for more information about a command.
+-- help.stderr --

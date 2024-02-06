@@ -1,0 +1,17 @@
+env HOME=$WORK/home
+
+# --version
+exec rw --version
+cmp stdout version.stdout
+cmp stderr version.stderr
+
+# -v
+exec rw -v
+cmp stdout version.stdout
+cmp stderr version.stderr
+
+-- version.stdout --
+Version: unknown
+Commit:  unknown
+Date:    unknown
+-- version.stderr --

@@ -7,7 +7,10 @@ require (
 	golang.org/x/term v0.16.0
 )
 
-require golang.org/x/mod v0.14.0
+require (
+	github.com/rogpeppe/go-internal v1.11.0
+	golang.org/x/mod v0.14.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

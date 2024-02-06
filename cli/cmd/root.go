@@ -36,7 +36,7 @@ func init() {
 }
 
 func Execute() {
-	rootCmd.SetVersionTemplate(fmt.Sprintf("Version: %s\nCommit:\t %s\nDate:\t %s\n", BuildVersion, BuildCommit, BuildDate))
+	rootCmd.SetVersionTemplate(fmt.Sprintf("Version: %s\nCommit:  %s\nDate:    %s\n", BuildVersion, BuildCommit, BuildDate))
 	err := rootCmd.Execute()
 	if err != nil {
 		slog.Error("command failed with an error", slog.String("error", err.Error()))

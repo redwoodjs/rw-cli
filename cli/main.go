@@ -25,6 +25,10 @@ const (
 )
 
 func main() {
+	os.Exit(Main())
+}
+
+func Main() int {
 	// Forward the version information to the cmd package
 	cmd.BuildVersion = version
 	cmd.BuildCommit = commit
@@ -33,13 +37,13 @@ func main() {
 	err := ensureDotRWExists()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
 
 	err = setupDebugLogger()
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
 	// We defer here rather than inside the setupDebugLogger function so that
 	// the logger is available to the rest of the program
@@ -47,6 +51,8 @@ func main() {
 
 	// The root command handles errors itself, so we don't need to do anything
 	cmd.Execute()
+
+	return 0
 }
 
 func ensureDotRWExists() error {

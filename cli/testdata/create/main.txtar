@@ -1,0 +1,4 @@
+env HOME=$WORK/home
+
+exec echo 'hello world'
+stdout 'hello world\n'

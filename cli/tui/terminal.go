@@ -1,4 +1,4 @@
-package cmd
+package tui
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 )
 
 // Uses defaults if the terminal size cannot be determined
-func getTerminalSize() (int, int) {
+func GetTerminalSize() (int, int) {
 	w, h, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return 80, 24

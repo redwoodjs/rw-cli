@@ -18,7 +18,11 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v58/github"
 	"github.com/hairyhenderson/go-which"
+	"github.com/redwoodjs/rw-cli/cli/config"
+	"github.com/redwoodjs/rw-cli/cli/tui"
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -61,6 +65,9 @@ func init() {
 
 func runCreate(cmd *cobra.Command, args []string) error {
 	slog.Debug("create command", slog.String("positional", args[0]))
+	span := trace.SpanFromContext(*config.RootSpanCtx)
+	span.SetAttributes(attribute.String("command", "create"))
+
 	printInto()
 
 	// Check node
@@ -390,7 +397,7 @@ func setupGit(cmd *cobra.Command, vTDir string) error {
 }
 
 func printInto() {
-	w, _ := getTerminalSize()
+	w, _ := tui.GetTerminalSize()
 
 	style := lipgloss.NewStyle().
 		Bold(true).
@@ -404,7 +411,7 @@ func printInto() {
 }
 
 func printEpilogue(appDir string) {
-	w, _ := getTerminalSize()
+	w, _ := tui.GetTerminalSize()
 	style := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder(), false, false, true).
 		BorderForeground(lipgloss.Color("#FF845E")).

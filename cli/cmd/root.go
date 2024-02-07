@@ -6,7 +6,11 @@ import (
 	"os"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/redwoodjs/rw-cli/cli/config"
+	"github.com/redwoodjs/rw-cli/cli/tui"
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -42,7 +46,7 @@ func Execute() {
 		slog.Error("command failed with an error", slog.String("error", err.Error()))
 
 		// TODO(jgmw): improve error output styling
-		width, _ := getTerminalSize()
+		width, _ := tui.GetTerminalSize()
 		errStyle := lipgloss.NewStyle().
 			Bold(true).
 			Border(lipgloss.DoubleBorder(), true, false, true).
@@ -53,6 +57,10 @@ func Execute() {
 		fmt.Println()
 		fmt.Println(errStyle.Render(errMsg))
 		fmt.Println()
+
+		// TODO(jgmw): get the active span and set the status to error
+		span := trace.SpanFromContext(*config.RootSpanCtx)
+		span.SetStatus(codes.Error, err.Error())
 
 		os.Exit(1)
 	}

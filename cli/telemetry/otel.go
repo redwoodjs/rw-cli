@@ -116,6 +116,7 @@ func (se *SlogExporter) ExportSpans(ctx context.Context, spans []trace.ReadOnlyS
 			slog.String("startTime", fmt.Sprintf("%+v", span.StartTime())),
 			slog.String("endTime", fmt.Sprintf("%+v", span.EndTime())),
 			slog.String("events", fmt.Sprintf("%+v", span.Events())),
+			slog.String("resource", fmt.Sprintf("%+v", span.Resource())),
 			slog.String("raw", fmt.Sprintf("%+v", span)),
 		)
 	}

@@ -14,8 +14,6 @@ import (
 )
 
 var (
-	telemetryFlag bool
-
 	BuildVersion = "unknown"
 	BuildCommit  = "unknown"
 	BuildDate    = "unknown"
@@ -36,7 +34,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVar(&telemetryFlag, "telemetry", true, "Send telemetry events, see: https://telemetry.redwoodjs.com")
+	// ...
 }
 
 func Execute() {

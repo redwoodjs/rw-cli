@@ -31,6 +31,9 @@ func main() {
 	cmd.BuildDate = date
 	cmd.BuildDate = date
 
+	// TODO(jgmw): Support disabling telemetry via an environment variable
+	// telemetryEnabled := os.Getenv("REDWOOD_DISABLE_TELEMETRY") == ""
+
 	// Handle SIGINT gracefully for the telemetry
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()

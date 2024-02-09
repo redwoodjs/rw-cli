@@ -8,7 +8,7 @@ import (
 const (
 	RW_DIR_NAME = ".rw"
 
-	RW_OTEL_ENDPOINT = "http://localhost:4318/v1/traces"
+	RW_OTEL_ENDPOINT = "https://quark.quantumparticle.io/v1/traces"
 )
 
 // ----------------------------------------------------------------

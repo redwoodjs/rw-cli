@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/redwoodjs/rw-cli/cli/cmd"
 	"github.com/redwoodjs/rw-cli/cli/config"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -49,6 +53,25 @@ func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 }
 
 func newTraceProvider(ctx context.Context) (*sdktrace.TracerProvider, error) {
+
+	// TODO(jgmw): Get shell name
+	// TODO(jgmw): Get node version
+	// TODO(jgmw): Get yarn version
+	// TODO(jgmw): Get npm version
+	// TODO(jgmw): Get vscode version
+	// TODO(jgmw): Get memory size
+	// TODO(jgmw): Get UID
+
+	// Detecting environment information
+	osName := runtime.GOOS
+	osArch := runtime.GOARCH
+	osVersion := "unknown"
+	cpuCount := runtime.NumCPU()
+	nodeEnv := os.Getenv("NODE_ENV")
+	ciRedwood := os.Getenv("REDWOOD_CI") != ""
+	ciIs := isCI()
+	devEnv := getDevelopmentEnvironment()
+
 	// TODO(jgmw): Get the resource information from the environment, os, cpu, etc.
 	r, err := resource.Merge(
 		resource.Default(),
@@ -56,21 +79,21 @@ func newTraceProvider(ctx context.Context) (*sdktrace.TracerProvider, error) {
 			semconv.SchemaURL,
 			semconv.ServiceName("rw-cli"),
 			semconv.ServiceVersion(cmd.BuildVersion),
-			semconv.OSName(""),
-			semconv.OSVersion(""),
-
-			// 'shell.name': info.System?.Shell?.name,
-			// 'node.version': info.Binaries?.Node?.version,
-			// 'yarn.version': info.Binaries?.Yarn?.version,
-			// 'npm.version': info.Binaries?.npm?.version,
-			// 'vscode.version': info.IDEs?.VSCode?.version,
-			// 'cpu.count': cpu.physicalCores,
-			// 'memory.gb': Math.round(mem.total / 1073741824),
-			// 'env.node_env': process.env.NODE_ENV || null,
-			// 'ci.redwood': !!process.env.REDWOOD_CI,
-			// 'ci.isci': ci.isCI,
-			// 'dev.environment': developmentEnvironment,
-			// uid: UID,
+			semconv.OSName(osName),
+			attribute.String("os.arch", osArch),
+			attribute.String("os.version", osVersion),
+			attribute.String("shell.name", "unknown"),
+			attribute.String("node.version", "unknown"),
+			attribute.String("yarn.version", "unknown"),
+			attribute.String("npm.version", "unknown"),
+			attribute.String("vscode.version", "unknown"),
+			attribute.Int("cpu.count", cpuCount),
+			attribute.Int("memory.gb", 0),
+			attribute.String("env.node_env", nodeEnv),
+			attribute.Bool("ci.redwood", ciRedwood),
+			attribute.Bool("ci.isci", ciIs),
+			attribute.String("dev.environment", devEnv),
+			attribute.String("uid", "unknown"),
 		),
 	)
 	if err != nil {
@@ -126,4 +149,101 @@ func (se *SlogExporter) ExportSpans(ctx context.Context, spans []trace.ReadOnlyS
 func (se *SlogExporter) Shutdown(ctx context.Context) error {
 	// We don't need to do anything to shut down the SlogExporter
 	return nil
+}
+
+// Inspired from: https://github.com/watson/ci-info
+func isCI() bool {
+	// Explicitly check for "false" to bail out early
+	if os.Getenv("CI") == "false" {
+		return false
+	}
+
+	// Loop through a list of known CI flags
+	flags := []string{
+		// Generic flags
+		"BUILD_ID",
+		"BUILD_NUMBER",
+		"CI",
+		"CI_APP_ID",
+		"CI_BUILD_ID",
+		"CI_BUILD_NUMBER",
+		"CI_NAME",
+		"CONTINUOUS_INTEGRATION",
+		"RUN_ID",
+		// Specific flags
+		"REDWOOD_CI",
+		"AGOLA",
+		"APPCIRCLE",
+		"APPVEYOR",
+		"CODEBUILD",
+		"AZURE_PIPELINES",
+		"BAMBOO",
+		"BITBUCKET",
+		"BITRISE",
+		"BUDDY",
+		"BUILDKITE",
+		"CIRCLE",
+		"CIRRUS",
+		"CODEFRESH",
+		"CODESHIP",
+		"DRONE",
+		"DSARI",
+		"EARTHLY",
+		"EAS",
+		"GERRIT",
+		"GITHUB_ACTIONS",
+		"GITLAB",
+		"GITEA_ACTIONS",
+		"GOCD",
+		"GOOGLE_CLOUD_BUILD",
+		"HARNESS",
+		"HEROKU",
+		"HUDSON",
+		"JENKINS",
+		"LAYERCI",
+		"MAGNUM",
+		"NETLIFY",
+		"NEVERCODE",
+		"PROW",
+		"RELEASEHUB",
+		"RENDER",
+		"SAIL",
+		"SCREWDRIVER",
+		"SEMAPHORE",
+		"SOURCEHUT",
+		"STRIDER",
+		"TASKCLUSTER",
+		"TEAMCITY",
+		"TRAVIS",
+		"VELA",
+		"VERCEL",
+		"APPCENTER",
+		"WOODPECKER",
+	}
+
+	for _, flag := range flags {
+		v := strings.ToLower(os.Getenv(flag))
+		// We assume any value other than "false" indicates the flag is set
+		if v != "" && v != "false" {
+			return true
+		}
+	}
+
+	// No known CI flag was found
+	return false
+}
+
+func getDevelopmentEnvironment() string {
+	// Check through all the env var keys
+	for _, e := range os.Environ() {
+		key := strings.SplitN(e, "=", 2)[0]
+
+		// Gitpod
+		if strings.HasPrefix(key, "GITPOD_") {
+			return "gitpod"
+		}
+	}
+
+	// No known development environment was found
+	return ""
 }

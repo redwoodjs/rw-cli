@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/mod/semver"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v58/github"
@@ -286,9 +288,10 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		err = setupGit(cmd, vTDir)
 		if err != nil {
 			slog.Error("failed to setup git", slog.String("error", err.Error()))
-			return err
+			fmt.Println("   ✋ Failed to complete git setup")
+		} else {
+			slog.Debug("git setup complete")
 		}
-		slog.Debug("git setup complete")
 	}
 
 	if yarnInstallFlag {
@@ -322,8 +325,6 @@ func checkNode() error {
 		slog.Debug("node found", slog.String("path", node))
 	}
 
-	// TODO(jgmw): Check node installation source
-
 	// Check node version
 	nodeVer, err := exec.Command("node", "-v").Output()
 	if err != nil {
@@ -331,7 +332,12 @@ func checkNode() error {
 	}
 	slog.Debug("node version", slog.String("version", string(nodeVer)))
 
-	// TODO(jgmw): Check node version against minimum version
+	// We require node 20
+	nodeReqVer := "v20.0.0"
+	if semver.Compare(nodeReqVer, strings.TrimSpace(string(nodeVer))) > 0 {
+		slog.Error("node version is too low", slog.String("version", string(nodeVer)), slog.String("required", nodeReqVer))
+		return fmt.Errorf("node version is too low")
+	}
 
 	return nil
 }
@@ -342,11 +348,31 @@ func checkYarn() error {
 		return fmt.Errorf("yarn not found")
 	}
 	slog.Debug("yarn found", slog.Int("count", len(yarns)))
+	allCorepack := true
 	for _, yarn := range yarns {
 		slog.Debug("yarn found", slog.String("path", yarn))
+
+		// Run `exec env | grep COREPACK_ROOT`
+		out, err := exec.Command(yarn, "exec", "env").Output()
+		if err != nil {
+			slog.Error("failed to run yarn exec env", slog.String("error", err.Error()))
+			return err
+		}
+		sOut := string(out)
+		found := false
+		for _, line := range strings.Split(sOut, "\n") {
+			if strings.Contains(line, "COREPACK_ROOT=") {
+				slog.Debug("yarn is used via corepack", slog.String("line", line))
+				found = true
+			}
+		}
+		allCorepack = allCorepack && found
 	}
 
-	// TODO(jgmw): Check yarn installation source
+	if !allCorepack {
+		slog.Error("yarn is not used via corepack", slog.Bool("all", allCorepack))
+		return fmt.Errorf("yarn is not used via corepack")
+	}
 
 	return nil
 }

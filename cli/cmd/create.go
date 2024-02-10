@@ -62,7 +62,12 @@ func init() {
 }
 
 func runCreate(cmd *cobra.Command, args []string) error {
-	slog.Debug("create command", slog.String("positional", args[0]))
+	if len(args) == 0 {
+		slog.Debug("create command", "positional", "-")
+	} else {
+		slog.Debug("create command", slog.String("positional", args[0]))
+	}
+
 	printInto()
 
 	// Check node
@@ -87,6 +92,8 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	tDir := "./redwood-app"
 	if len(args) == 0 {
 		// TODO: Prompt for target directory
+		// slog.Debug("target directory unset, prompting")
+		return fmt.Errorf("Missing target directory")
 	} else {
 		tDir = args[0]
 	}

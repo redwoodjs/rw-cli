@@ -3,6 +3,7 @@ name: 🔄 CI
 on:
   pull_request:
   push:
+    branches: [main]
   workflow_dispatch:
 
 # Cancel in-progress runs of this workflow.
@@ -11,9 +12,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  RW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
-  ci:
-    name: 🔄 CI
+  go:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +24,150 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version-file: ./cli/go.mod
+          cache-dependency-path: ./cli/go.sum
 
       - run: make smoke-test
 
-      - run: ./rw create $TMPDIR/rw-test
+  git:
+    runs-on: ubuntu-latest
+    needs: go
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ./cli/go.mod
+          cache-dependency-path: ./cli/go.sum
+
+      - run: make build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: corepack enable
+
+      - name: Move runners default yarn bin
+        run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
+
+      - name: Doesn't require git config
+        run: ./rw create ${{ runner.temp }}/rw-test-no-git-config
+
+      - name: Works with git config
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "test"
+          ./rw create ${{ runner.temp }}/rw-test-git-config
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: git-logs
+          path: ~/.rw/debug.json
+
+  node:
+    runs-on: ubuntu-latest
+    needs: go
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ./cli/go.mod
+          cache-dependency-path: ./cli/go.sum
+
+      - run: make build
+
+      - name: Errors if the node version is too low
+        run: |
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-node-version-unmet
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 21
+      - run: corepack enable
+
+      - name: Move runners default yarn bin
+        run: mv /usr/local/bin/yarn /usr/local/bin/yarn-moved
+
+      - name: Allows node versions >= 20
+        run: |
+          ./rw create ${{ runner.temp }}/rw-test-node-version-met
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: node-logs
+          path: ~/.rw/debug.json
+
+  yarn:
+    runs-on: ubuntu-latest
+    needs: go
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ./cli/go.mod
+          cache-dependency-path: ./cli/go.sum
+
+      - run: make build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Errors if yarn is not used via corepack
+        run: |
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-yarn-not-corepack
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+          fi
+
+      - name: Errors if not all yarns are via corepack
+        run: |
+          corepack enable
+          # Disable immediate exit on error
+          set +e
+          ./rw create ${{ runner.temp }}/rw-test-yarn-not-all-corepack
+          result=$?
+          set -e
+
+          if [ $result -eq 0 ]; then
+            echo "Command succeeded when it was expected to fail."
+            exit 1
+          else
+            echo "Command failed as expected."
+            exit 0
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yarn-logs
+          path: ~/.rw/debug.json

@@ -42,7 +42,8 @@ func Execute() {
 		slog.Error("command failed with an error", slog.String("error", err.Error()))
 
 		// TODO(jgmw): improve error output styling
-		width, _ := getTerminalSize()
+		termWidth, _ := getTerminalSize()
+		width := min(80, termWidth)
 		errStyle := lipgloss.NewStyle().
 			Bold(true).
 			Border(lipgloss.DoubleBorder(), true, false, true).

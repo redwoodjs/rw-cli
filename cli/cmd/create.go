@@ -390,7 +390,8 @@ func setupGit(cmd *cobra.Command, vTDir string) error {
 }
 
 func printInto() {
-	w, _ := getTerminalSize()
+	termWidth, _ := getTerminalSize()
+	w := min(80, termWidth)
 
 	style := lipgloss.NewStyle().
 		Bold(true).
@@ -404,7 +405,8 @@ func printInto() {
 }
 
 func printEpilogue(appDir string) {
-	w, _ := getTerminalSize()
+	termWidth, _ := getTerminalSize()
+	w := min(80, termWidth)
 	style := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder(), false, false, true).
 		BorderForeground(lipgloss.Color("#FF845E")).

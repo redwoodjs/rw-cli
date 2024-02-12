@@ -14,3 +14,9 @@ func getTerminalSize() (int, int) {
 	}
 	return w, h
 }
+
+// Returns the terminal width if it's less than 80. Else returns 80
+func getClampedTerminalWidth() int {
+	termWidth, _ := getTerminalSize()
+	return min(80, termWidth)
+}

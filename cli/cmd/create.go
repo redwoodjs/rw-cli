@@ -416,29 +416,24 @@ func setupGit(cmd *cobra.Command, vTDir string) error {
 }
 
 func printInto() {
-	termWidth, _ := getTerminalSize()
-	w := min(80, termWidth)
-
 	style := lipgloss.NewStyle().
 		Bold(true).
 		Border(lipgloss.DoubleBorder(), true, false, true).
 		BorderForeground(lipgloss.Color("#FF845E")).
 		// Foreground(lipgloss.Color("#E8E8E8")).
 		Align(lipgloss.Center).
-		Width(w)
+		Width(getClampedTerminalWidth())
 
 	fmt.Println(style.Render("🌲 ⚡️ Welcome to RedwoodJS! ⚡️ 🌲"))
 }
 
 func printEpilogue(appDir string) {
-	termWidth, _ := getTerminalSize()
-	w := min(80, termWidth)
 	style := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder(), false, false, true).
 		BorderForeground(lipgloss.Color("#FF845E")).
 		// Foreground(lipgloss.Color("#E8E8E8")).
 		Align(lipgloss.Left).
-		Width(w)
+		Width(getClampedTerminalWidth())
 
 	// TODO(jgmw): Style each line differently as previously done
 	lines := []string{

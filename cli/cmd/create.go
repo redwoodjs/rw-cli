@@ -351,6 +351,7 @@ func checkNode() error {
 
 func checkYarn() error {
 	yarns := which.All("yarn")
+	realpaths := which.All("realpath")
 	if len(yarns) == 0 {
 		return fmt.Errorf("yarn not found")
 	}
@@ -359,20 +360,38 @@ func checkYarn() error {
 	for _, yarn := range yarns {
 		slog.Debug("yarn found", slog.String("path", yarn))
 
-		// Run `exec env | grep COREPACK_ROOT`
-		out, err := exec.Command(yarn, "exec", "env").Output()
-		if err != nil {
-			slog.Error("failed to run yarn exec env", slog.String("error", err.Error()))
-			return err
-		}
-		sOut := string(out)
 		found := false
-		for _, line := range strings.Split(sOut, "\n") {
-			if strings.Contains(line, "COREPACK_ROOT=") {
-				slog.Debug("yarn is used via corepack", slog.String("line", line))
-				found = true
+
+		if len(realpaths) > 0 {
+			realpath := realpaths[0]
+			yarnPath, err := exec.Command(realpath, yarn).Output()
+
+			if err == nil {
+				// TODO: Figure out Windows support
+				found = strings.Contains(string(yarnPath), "/node_modules/corepack/")
 			}
 		}
+
+		if !found {
+			// Run `yarn exec env | grep COREPACK_ROOT`
+			out, err := exec.Command(yarn, "exec", "env").Output()
+			if err != nil {
+				slog.Error(
+					"failed to run yarn exec env",
+					slog.String("error", err.Error()),
+					slog.String("msg", string(out)),
+				)
+				return err
+			}
+			sOut := string(out)
+			for _, line := range strings.Split(sOut, "\n") {
+				if strings.Contains(line, "COREPACK_ROOT=") {
+					slog.Debug("yarn is used via corepack", slog.String("line", line))
+					found = true
+				}
+			}
+		}
+
 		allCorepack = allCorepack && found
 	}
 
